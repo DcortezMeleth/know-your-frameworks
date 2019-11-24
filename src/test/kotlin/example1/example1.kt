@@ -2,6 +2,7 @@ package example1
 
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions
+import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.autoconfigure.SpringBootApplication
@@ -36,44 +37,15 @@ class Post(
         @Column(name = "version")
         var version: Long? = null,
 
-        @Column(name = "text")
-        var text: String? = null,
-
         @Column(name = "score")
         var score: Int? = null
 )
 
-@Entity
-@Table(name = "comments")
-class Comment(
-        @Id
-        @Column(name = "id")
-        @GeneratedValue(strategy = GenerationType.SEQUENCE)
-        var id: Long? = null,
-
-        @Version
-        @Column(name = "version")
-        var version: Long? = null,
-
-        @Column(name = "text")
-        var text: String? = null,
-
-        @JoinColumn(name = "post_id")
-        @ManyToOne
-        var post: Post? = null
-)
-
-
 
 // REPOSITORIES
 
-
 @Repository
 interface PostRepository : PagingAndSortingRepository<Post, Long> {
-
-    @Modifying
-    @Query(value = "update Post p set p.score = 0 where p.id = :postId")
-    fun resetScore(@Param("postId") postId: Long)
 
     @Modifying
     @Query(value = "update Post p set p.score = p.score + 1 where p.id = :postId")
@@ -88,9 +60,6 @@ interface PostRepository : PagingAndSortingRepository<Post, Long> {
 
 interface PostService {
     @Throws(MyCustomException::class)
-    fun doUpvote(postId: Long)
-
-    @Throws(MyCustomException::class)
     fun upvote(postId: Long)
 }
 
@@ -99,13 +68,9 @@ open class PostServiceImpl(
         @Autowired
         val postRepository: PostRepository
 ) : PostService {
-    @Throws(MyCustomException::class)
-    override fun doUpvote(postId: Long) {
-        upvote(postId)
-    }
 
     @Throws(MyCustomException::class)
-    @Transactional(rollbackFor = [MyCustomException::class])
+    @Transactional//(rollbackFor = [MyCustomException::class])
     override fun upvote(postId: Long) {
         postRepository.upvote(postId)
 
@@ -129,6 +94,7 @@ fun main(args: Array<String>) {
 // TESTS
 
 @SpringJUnitConfig(classes = [FrameworkApplication::class])
+@DisplayName("Rollback test")
 class TestClass(
         @Autowired
         val postService: PostService,
@@ -143,6 +109,7 @@ class TestClass(
     }
 
     @Test
+    @DisplayName("Should rollback after exception")
     fun testUpvote() {
         //given
         var post = Post()
@@ -151,10 +118,8 @@ class TestClass(
         val postId = post.id!!
 
         //then
-        try {
+        Assertions.assertThrows(MyCustomException::class.java) {
             postService.upvote(postId)
-        } catch (e: MyCustomException) {
-            //expected - should roll back transaction
         }
 
         //then
