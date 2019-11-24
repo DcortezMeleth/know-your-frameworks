@@ -116,7 +116,6 @@ open class PostServiceImpl(
 
 // CONFIGURATION
 
-
 @EnableJpaRepositories(basePackages = ["example1"])
 @EnableTransactionManagement
 @SpringBootApplication(scanBasePackages = ["example1"])
