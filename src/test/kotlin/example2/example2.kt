@@ -1,4 +1,4 @@
-package example1
+package example2
 
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions
@@ -105,7 +105,7 @@ open class PostServiceImpl(
     }
 
     @Throws(MyCustomException::class)
-    @Transactional(rollbackFor = [MyCustomException::class])
+    @Transactional
     override fun upvote(postId: Long) {
         postRepository.upvote(postId)
 
@@ -116,9 +116,9 @@ open class PostServiceImpl(
 
 // CONFIGURATION
 
-@EnableJpaRepositories(basePackages = ["example1"])
+@EnableJpaRepositories(basePackages = ["example2"])
 @EnableTransactionManagement
-@SpringBootApplication(scanBasePackages = ["example1"])
+@SpringBootApplication(scanBasePackages = ["example2"])
 open class FrameworkApplication
 
 fun main(args: Array<String>) {
@@ -129,7 +129,7 @@ fun main(args: Array<String>) {
 // TESTS
 
 @SpringJUnitConfig(classes = [FrameworkApplication::class])
-class TestClass(
+class TestClass2(
         @Autowired
         val postService: PostService,
 
