@@ -1,6 +1,5 @@
-package example1
+package example4
 
-import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
@@ -17,10 +16,6 @@ import org.springframework.test.context.junit.jupiter.SpringJUnitJupiterConfig
 import org.springframework.transaction.annotation.EnableTransactionManagement
 import org.springframework.transaction.annotation.Transactional
 import javax.persistence.*
-
-// EXCEPTIONS
-class MyCustomException(message: String) : Exception(message)
-
 
 // ENTITIES
 
@@ -67,20 +62,18 @@ open class PostServiceImpl(
         val postRepository: PostRepository
 ) : PostService {
 
-    @Transactional//(rollbackFor = [MyCustomException::class])
+    @Transactional
     override fun upvote(postId: Long) {
         postRepository.upvote(postId)
-
-        throw MyCustomException("Something wrong happend!")
     }
 
 }
 
 // CONFIGURATION
 
-@EnableJpaRepositories(basePackages = ["example1"])
+@EnableJpaRepositories(basePackages = ["example4"])
 @EnableTransactionManagement
-@SpringBootApplication(scanBasePackages = ["example1"])
+@SpringBootApplication(scanBasePackages = ["example4"])
 open class FrameworkApplication
 
 
@@ -88,34 +81,26 @@ open class FrameworkApplication
 
 @SpringJUnitJupiterConfig(classes = [FrameworkApplication::class])
 @DisplayName("Rollback test")
-class NoRollbackForException(
+class InjectImpl(
         @Autowired
-        val postService: PostService,
+        val postService: PostServiceImpl,
 
         @Autowired
         val postRepository: PostRepository
 ) {
 
-    @AfterEach
-    fun cleanUp() {
-        postRepository.deleteAll()
-    }
-
     @Test
-    @DisplayName("Should rollback after exception")
+    @DisplayName("Should upvote")
     fun testUpvote() {
-        //given
         var post = Post()
         post = postRepository.save(post)
         val postId = post.id!!
 
-        //then
-        Assertions.assertThrows(Exception::class.java) {
-            postService.upvote(postId)
-        }
+        //given
+        postService.upvote(postId)
 
         //then
-        Assertions.assertEquals(0, postRepository.getScore(postId))
+        Assertions.assertEquals(1, postRepository.getScore(postId))
     }
 
 }
