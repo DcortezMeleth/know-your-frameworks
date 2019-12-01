@@ -1,116 +1,67 @@
 package example2
 
-import org.junit.jupiter.api.AfterEach
+//import org.springframework.transaction.annotation.Transactional
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.autoconfigure.SpringBootApplication
 import org.springframework.context.annotation.AdviceMode
-import org.springframework.data.jpa.repository.Modifying
-import org.springframework.data.jpa.repository.Query
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories
-import org.springframework.data.repository.PagingAndSortingRepository
-import org.springframework.data.repository.query.Param
-import org.springframework.stereotype.Repository
+import org.springframework.scheduling.annotation.EnableScheduling
+import org.springframework.scheduling.annotation.Scheduled
 import org.springframework.stereotype.Service
 import org.springframework.test.context.junit.jupiter.SpringJUnitJupiterConfig
 import org.springframework.transaction.annotation.EnableTransactionManagement
-//import org.springframework.transaction.annotation.Transactional
-import org.springframework.transaction.support.TransactionSynchronizationManager
-import javax.persistence.*
-import javax.transaction.Transactional
-
-// ENTITIES
-
-@Entity
-@Table(name = "posts")
-class Post(
-        @Id
-        @Column(name = "id")
-        @GeneratedValue(strategy = GenerationType.SEQUENCE)
-        var id: Long? = null,
-
-        @Version
-        @Column(name = "version")
-        var version: Long? = null,
-
-        @Column(name = "score")
-        var score: Int = 0
-)
-
-// REPOSITORIES
-
-
-@Repository
-interface PostRepository : PagingAndSortingRepository<Post, Long> {
-
-    @Transactional
-    @Modifying
-    @Query(value = "update Post p set p.score = p.score + 1 where p.id = :postId")
-    fun upvote(@Param("postId") postId: Long)
-}
 
 
 // SERVICES
 
-interface PostService {
-    @Transactional
-    fun upvote(postId: Long): Boolean
-}
 
 @Service
-open class PostServiceImpl(
-        @Autowired
-        val postRepository: PostRepository
-) : PostService {
+open class Timer(
+        var lock: Boolean = false
+) {
 
-    override fun upvote(postId: Long): Boolean {
-        postRepository.upvote(postId)
+    @Scheduled(fixedDelay = 1000, initialDelay = 2000)
+    fun scheduledOne() {
+        var counter = 1
+        while (!lock) {
+            println("Scheduler one waiting for ${counter++}th time!")
+            Thread.sleep(1000);
+        }
 
-        return TransactionSynchronizationManager.isActualTransactionActive()
+        this.lock = true;
     }
 
+    @Scheduled(fixedDelay = 1000, initialDelay = 5000)
+    fun scheduledTwo() {
+        this.lock = true;
+    }
 }
 
 // CONFIGURATION
 
-@EnableJpaRepositories(basePackages = ["example2"])
-@EnableTransactionManagement(mode = AdviceMode.PROXY, proxyTargetClass = true)
+@EnableScheduling
 @SpringBootApplication(scanBasePackages = ["example2"])
 open class FrameworkApplication
 
 
 // TESTS
 
-@DisplayName("Testing transaction")
+@DisplayName("Testing schedulers")
 @SpringJUnitJupiterConfig(classes = [FrameworkApplication::class])
-class TransactionalAnnotation(
+class Schedulers(
         @Autowired
-        val postService: PostService,
-
-        @Autowired
-        val postRepository: PostRepository
+        private val timer: Timer
 ) {
 
-    @AfterEach
-    fun cleanUp() {
-        postRepository.deleteAll()
-    }
-
     @Test
-    @DisplayName("Transaction should be present")
-    fun testUpvote() {
-        //given
-        var post = Post()
-        post = postRepository.save(post)
-        val postId = post.id!!
-
-        //then
-        val transactionActive = postService.upvote(postId)
-
-        //then
-        Assertions.assertTrue(transactionActive)
+    @DisplayName("Schedulers should work separately")
+    fun waitForStateChanges() {
+        while (!timer.lock) {
+            Thread.sleep(1000);
+        }
     }
 
 }
