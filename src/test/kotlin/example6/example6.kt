@@ -27,14 +27,13 @@ open class PrototypeService(
 
 @Service
 open class SingletonService(
-        @Autowired
-        private val prototypeService: PrototypeService
 //        @Autowired
-//        private val applicationContext: ApplicationContext
+//        private val prototypeService: PrototypeService
+@Autowired
+private val applicationContext: ApplicationContext
 ) {
     fun incPrototype(): Int {
-        return prototypeService.inc()
-//        return applicationContext.getBean(PrototypeService::class.java).inc()
+        return applicationContext.getBean(PrototypeService::class.java).inc()
     }
 }
 

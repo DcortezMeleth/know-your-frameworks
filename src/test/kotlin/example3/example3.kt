@@ -101,8 +101,8 @@ open class PostServiceImpl(
         postRepository.updateTitle(postId, "tmp")
 
         try {
-//            postRepository.updateTitle(postId, newName)
-            postService.rename(post, newName)
+            postRepository.updateTitle(postId, newName)
+//            postService.rename(post, newName)
         } catch (e: Exception) {
             //according to my understanding this changes too should be rolled back because there is exception
             //thrown by postService.rename(post, newName) 2 lines before

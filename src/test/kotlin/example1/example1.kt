@@ -19,7 +19,7 @@ import org.springframework.transaction.annotation.Transactional
 import javax.persistence.*
 
 // EXCEPTIONS
-class MyCustomException(message: String) : Exception(message)
+class MyCustomException(message: String) : RuntimeException(message)
 
 
 // ENTITIES
@@ -67,7 +67,7 @@ open class PostServiceImpl(
         val postRepository: PostRepository
 ) : PostService {
 
-    @Transactional//(rollbackFor = [MyCustomException::class])
+    @Transactional(rollbackFor = [MyCustomException::class])
     override fun upvote(postId: Long) {
         postRepository.upvote(postId)
 

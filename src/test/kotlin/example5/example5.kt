@@ -34,11 +34,6 @@ class Post(
         @Column(name = "version")
         var version: Long? = null
 )
-//
-//@MappedSuperclass
-//class PostAware(
-//
-//)
 
 @Entity
 @Table(name = "comments")
